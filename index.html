@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocket Dodge</title>
+<style>
+    canvas {
+        background-color: black;
+        display: block;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Get canvas and context
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Set up game variables
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
+        const rocketSize = 50;
+        let rocketX = WIDTH / 4;
+        let rocketY = HEIGHT / 2;
+        let rocketSpeedX = 0;
+        let rocketSpeedY = 0;
+        const planetSize = 200; // Set based on the actual planet image size
+        const planetHitboxSize = 32; // Adjust hitbox size to fit the planet
+        let planets = [];
+        let spawnTimer = 0;
+        const spawnRate = 30;
+        const planetSpeed = -5;
+        let score = 0;
+        const font = "36px Arial";
+        let running = true;
+
+        // Load images
+        const rocketImg = new Image();
+        rocketImg.src = "rocket.png";
+
+        const planetImg = new Image();
+        planetImg.src = "planet.png";
+
+        // Event listeners
+        document.addEventListener("keydown", function(event) {
+            switch (event.key) {
+                case "w":
+                    rocketSpeedY = -5;
+                    break;
+                case "s":
+                    rocketSpeedY = 5;
+                    break;
+                case "a":
+                    rocketSpeedX = -5;
+                    break;
+                case "d":
+                    rocketSpeedX = 5;
+                    break;
+            }
+        });
+
+        document.addEventListener("keyup", function(event) {
+            switch (event.key) {
+                case "w":
+                case "s":
+                    rocketSpeedY = 0;
+                    break;
+                case "a":
+                case "d":
+                    rocketSpeedX = 0;
+                    break;
+            }
+        });
+
+        // Game loop
+        function gameLoop() {
+            if (!running) return;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+            // Move rocket
+            rocketX += rocketSpeedX;
+            rocketY += rocketSpeedY;
+
+            // Draw rocket
+            ctx.drawImage(rocketImg, rocketX - rocketSize / 2, rocketY - rocketSize / 2, rocketSize, rocketSize);
+
+            // Move and draw planets
+            for (let i = 0; i < planets.length; i++) {
+                const planet = planets[i];
+                planet.x += planetSpeed;
+                ctx.drawImage(planetImg, planet.x - planetSize / 2, planet.y - planetSize / 2, planetSize, planetSize);
+
+                // Check for collision
+                if (
+                    rocketX - rocketSize / 2 < planet.x + planetHitboxSize / 2 &&
+                    rocketX + rocketSize / 2 > planet.x - planetHitboxSize / 2 &&
+                    rocketY - rocketSize / 2 < planet.y + planetHitboxSize / 2 &&
+                    rocketY + rocketSize / 2 > planet.y - planetHitboxSize / 2
+                ) {
+                    running = false;
+                    break;
+                }
+
+                // Check if planet goes out of bounds
+                if (planet.x + planetSize < 0) {
+                    planets.splice(i, 1);
+                    score++;
+                }
+            }
+
+            // Spawn new planets
+            spawnTimer++;
+            if (spawnTimer >= spawnRate) {
+                spawnPlanet();
+                spawnTimer = 0;
+            }
+
+            // Draw score
+            ctx.fillStyle = "white";
+            ctx.font = font;
+            ctx.fillText("Score: " + score, 10, 40);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Spawn a new planet
+        function spawnPlanet() {
+            const planetY = Math.floor(Math.random() * HEIGHT);
+            planets.push({ x: WIDTH, y: planetY });
+        }
+
+        // Start game loop
+        gameLoop();
+    });
+</script>
+</body>
+</html>
